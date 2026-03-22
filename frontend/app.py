@@ -589,5 +589,201 @@ def htmx_trust_score(property_id):
     return '<span class="text-gray-500">N/A</span>'
 
 
+# ==================== TIMELINE ROUTES ====================
+
+@app.route('/properties/<int:property_id>/timeline')
+def property_timeline(property_id):
+    """Property timeline page"""
+    response = api_call('GET', f'/properties/{property_id}/timeline')
+
+    if response and response.status_code == 200:
+        events = response.json()
+        return render_template('properties/timeline.html', events=events, property_id=property_id)
+
+    flash('Failed to load timeline', 'error')
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+@app.route('/properties/<int:property_id>/inspections', methods=['POST'])
+@login_required
+def schedule_inspection(property_id):
+    """Schedule an inspection"""
+    data = {
+        'scheduled_date': request.form.get('scheduled_date'),
+        'notes': request.form.get('notes'),
+        'agent_id': request.form.get('agent_id')
+    }
+
+    response = api_call('POST', f'/properties/{property_id}/inspections', data=data)
+
+    if response and response.status_code == 200:
+        flash('Inspection scheduled successfully!', 'success')
+    else:
+        error = response.json().get('detail', 'Failed to schedule inspection') if response else 'Failed to schedule inspection'
+        flash(error, 'error')
+
+    return redirect(url_for('property_timeline', property_id=property_id))
+
+
+# ==================== CHAT ROUTES ====================
+
+@app.route('/chat')
+def chat_assistant():
+    """AI Chat Assistant page"""
+    return render_template('chat/assistant.html')
+
+
+# ==================== AGENT RATING ROUTES ====================
+
+@app.route('/properties/<int:property_id>/rate-agent', methods=['GET', 'POST'])
+@login_required
+def rate_agent(property_id):
+    """Rate agent for a property"""
+    if request.method == 'POST':
+        data = {
+            'agent_id': int(request.form.get('agent_id')),
+            'rating': int(request.form.get('rating')),
+            'comment': request.form.get('comment'),
+            'transaction_type': request.form.get('transaction_type')
+        }
+
+        response = api_call('POST', f'/properties/{property_id}/rate-agent', data=data)
+
+        if response and response.status_code == 200:
+            flash('Agent rated successfully!', 'success')
+            return redirect(url_for('property_detail', property_id=property_id))
+        else:
+            error = response.json().get('detail', 'Failed to rate agent') if response else 'Failed to rate agent'
+            flash(error, 'error')
+
+    # GET - show rating form
+    agent_id = request.args.get('agent_id')
+    if not agent_id:
+        flash('Please select an agent to rate', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    # Get property details
+    property_response = api_call('GET', f'/properties/{property_id}')
+    if not property_response or property_response.status_code != 200:
+        flash('Property not found', 'error')
+        return redirect(url_for('dashboard'))
+    property_data = property_response.json()
+
+    # Get agent details
+    agent_response = api_call('GET', f'/agents/{agent_id}')
+    if not agent_response or agent_response.status_code != 200:
+        flash('Agent not found', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+    agent_data = agent_response.json()
+
+    # Get previous ratings for this agent
+    ratings_response = api_call('GET', f'/properties/{property_id}/agent-ratings')
+    previous_ratings = ratings_response.json() if ratings_response and ratings_response.status_code == 200 else []
+
+    return render_template('agents/rate_agent.html', 
+                          property=property_data.get('property', property_data),
+                          agent=agent_data,
+                          previous_ratings=previous_ratings[:5])
+
+
+# ==================== IMAGE UPLOAD ROUTES ====================
+
+@app.route('/properties/<int:property_id>/images/upload', methods=['POST'])
+@login_required
+def upload_property_image(property_id):
+    """Upload property image"""
+    if 'image' not in request.files:
+        flash('No image file provided', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    file = request.files['image']
+    if file.filename == '':
+        flash('No image selected', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    # Upload to backend API
+    files = {'file': (file.filename, file.stream, file.content_type)}
+    data = {
+        'caption': request.form.get('caption', ''),
+        'is_primary': request.form.get('is_primary', 'false')
+    }
+
+    # For file upload, we need to use requests directly
+    try:
+        response = requests.post(
+            f"{API_URL}/properties/{property_id}/images",
+            files=files,
+            data=data,
+            headers=get_auth_headers()
+        )
+
+        if response.status_code == 200:
+            flash('Image uploaded successfully!', 'success')
+        else:
+            error = response.json().get('detail', 'Failed to upload image')
+            flash(error, 'error')
+    except Exception as e:
+        flash(f'Error uploading image: {str(e)}', 'error')
+
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+@app.route('/properties/<int:property_id>/images/<int:image_id>/delete', methods=['POST'])
+@login_required
+def delete_property_image(property_id, image_id):
+    """Delete property image"""
+    response = api_call('DELETE', f'/properties/{property_id}/images/{image_id}')
+
+    if response and response.status_code == 200:
+        flash('Image deleted successfully!', 'success')
+    else:
+        flash('Failed to delete image', 'error')
+
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+# ==================== ADMIN ROUTES ====================
+
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    """Admin dashboard page"""
+    # Check if user is admin
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    # Get dashboard statistics
+    stats_response = api_call('GET', '/admin/dashboard')
+    stats = stats_response.json().get('statistics', {}) if stats_response and stats_response.status_code == 200 else {}
+
+    # Get users
+    users_response = api_call('GET', '/admin/users')
+    users = users_response.json().get('users', []) if users_response and users_response.status_code == 200 else []
+
+    # Get pending documents
+    docs_response = api_call('GET', '/admin/documents/pending')
+    documents = docs_response.json().get('documents', []) if docs_response and docs_response.status_code == 200 else []
+
+    # Get disputes
+    disputes_response = api_call('GET', '/admin/disputes')
+    disputes = disputes_response.json().get('disputes', []) if disputes_response and disputes_response.status_code == 200 else []
+
+    # Get fraud alerts
+    alerts_response = api_call('GET', '/admin/fraud-alerts')
+    alerts = alerts_response.json().get('alerts', []) if alerts_response and alerts_response.status_code == 200 else []
+
+    # Get subscriptions count
+    subs_response = api_call('GET', '/ussd/subscriptions')
+    stats['total_subscriptions'] = len(subs_response.json().get('subscriptions', [])) if subs_response and subs_response.status_code == 200 else 0
+
+    return render_template('admin/dashboard.html',
+                          stats=stats,
+                          users=users[:10],
+                          documents=documents[:10],
+                          disputes=disputes[:10],
+                          alerts=alerts[:10])
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

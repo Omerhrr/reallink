@@ -18,6 +18,7 @@ from app.utils import (
 from app.services.state_machine import (
     PropertyStateMachine, UnitStateMachine, PermissionChecker, TransitionError
 )
+import asyncio
 
 
 class PropertyService:
@@ -224,6 +225,8 @@ class UnitService:
 
     def _update_property_rental_status(self, property_id: int):
         """Update property status based on unit rental status"""
+        from app.services.ussd_sms_service import SMSService
+
         units = self.get_units_for_property(property_id)
         total_units = len(units)
         rented_units = sum(1 for u in units if u.status == UnitStatus.RENTED)
@@ -231,6 +234,8 @@ class UnitService:
         property_obj = self.db.query(Property).filter(Property.id == property_id).first()
         if not property_obj:
             return
+
+        previous_status = property_obj.status
 
         if rented_units == 0:
             # All units available
@@ -241,6 +246,24 @@ class UnitService:
             property_obj.status = PropertyStatus.PARTIALLY_RENTED
 
         self.db.commit()
+
+        # Send SMS notification when property becomes fully rented
+        if property_obj.status == PropertyStatus.FULLY_RENTED and previous_status != PropertyStatus.FULLY_RENTED:
+            # Get owner
+            owner = self.db.query(User).filter(User.id == property_obj.owner_id).first()
+            if owner and owner.phone:
+                try:
+                    sms_service = SMSService()
+                    asyncio.create_task(
+                        sms_service.send_fully_rented_notification(
+                            phone=owner.phone,
+                            property_title=property_obj.title,
+                            property_id=property_obj.property_id,
+                            total_units=total_units
+                        )
+                    )
+                except Exception as e:
+                    print(f"Failed to send fully rented SMS: {e}")
 
 
 class DocumentService:

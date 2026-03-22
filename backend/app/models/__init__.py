@@ -299,6 +299,112 @@ class FraudAlert(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class PropertyImage(Base):
+    """Property Image model - images associated with properties"""
+    __tablename__ = "property_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    image_url = Column(String(500), nullable=False)
+    image_path = Column(String(500), nullable=True)  # Local file path if stored locally
+    caption = Column(String(255), nullable=True)
+    is_primary = Column(Boolean, default=False)  # Main image for the property
+    order = Column(Integer, default=0)  # Display order
+    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    property = relationship("Property", backref="images")
+    uploader = relationship("User")
+
+
+class Inspection(Base):
+    """Inspection model - property inspection scheduling"""
+    __tablename__ = "inspections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Who scheduled
+    scheduled_date = Column(DateTime, nullable=False)
+    status = Column(String(20), default="SCHEDULED")  # SCHEDULED, COMPLETED, CANCELLED
+    notes = Column(Text, nullable=True)
+    agent_id = Column(Integer, ForeignKey("agents.id"), nullable=True)  # Optional agent
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    property = relationship("Property")
+    user = relationship("User")
+    agent = relationship("Agent")
+
+
+class AgentRating(Base):
+    """Agent Rating model - ratings given to agents after deals"""
+    __tablename__ = "agent_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    agent_id = Column(Integer, ForeignKey("agents.id"), nullable=False)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Who rated
+    rating = Column(Integer, nullable=False)  # 1-5 stars
+    comment = Column(Text, nullable=True)
+    transaction_type = Column(String(20), nullable=True)  # SALE or RENT
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    agent = relationship("Agent", backref="ratings")
+    property = relationship("Property")
+    user = relationship("User")
+
+
+class TimelineEvent(Base):
+    """Timeline Event model - property lifecycle events"""
+    __tablename__ = "timeline_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
+    event_type = Column(String(50), nullable=False)  # LISTED, OFFER, INSPECTION, SOLD, RENTED, etc.
+    description = Column(Text, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Who triggered the event
+    metadata_json = Column(Text, nullable=True)  # JSON for additional data
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    property = relationship("Property")
+    user = relationship("User")
+
+
+class ChatSession(Base):
+    """Chat Session model - AI assistant chat sessions"""
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    session_id = Column(String(64), unique=True, nullable=False)
+    context_type = Column(String(20), nullable=True)  # property, general, search
+    context_id = Column(Integer, nullable=True)  # property_id if context is property
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    messages = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan")
+
+
+class ChatMessage(Base):
+    """Chat Message model - individual messages in chat sessions"""
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id"), nullable=False)
+    role = Column(String(20), nullable=False)  # user, assistant
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    session = relationship("ChatSession", back_populates="messages")
+
+
 # ==================== DATABASE SETUP ====================
 
 def get_engine(database_url: str = "sqlite:///./reallink.db"):
@@ -323,5 +429,6 @@ __all__ = [
     "TransactionType", "InterestStatus", "DisputeStatus", "UserRole",
     "User", "Property", "Unit", "Document", "OwnershipRecord",
     "Agent", "PropertyAgent", "Interest", "Transaction",
-    "Subscription", "Dispute", "FraudAlert"
+    "Subscription", "Dispute", "FraudAlert", "PropertyImage",
+    "Inspection", "AgentRating", "TimelineEvent", "ChatSession", "ChatMessage"
 ]

@@ -248,6 +248,42 @@ RealLink Ecosystem"""
 
         return await self.send_sms(phone, message)
 
+    async def send_inspection_scheduled(
+        self,
+        phone: str,
+        property_title: str,
+        date: str,
+        time: str
+    ) -> Dict[str, Any]:
+        """Send SMS notification when inspection is scheduled"""
+        message = f"""INSPECTION SCHEDULED
+Property: {property_title}
+Date: {date}
+Time: {time}
+
+You will receive a reminder before your inspection.
+RealLink Ecosystem"""
+
+        return await self.send_sms(phone, message)
+
+    async def send_fully_rented_notification(
+        self,
+        phone: str,
+        property_title: str,
+        property_id: str,
+        total_units: int
+    ) -> Dict[str, Any]:
+        """Send SMS when property becomes fully rented"""
+        message = f"""FULLY RENTED
+{property_title}
+Property ID: {property_id}
+
+All {total_units} unit(s) have been rented.
+Thank you for using RealLink.
+RealLink Ecosystem"""
+
+        return await self.send_sms(phone, message)
+
     async def match_and_notify_subscribers(
         self,
         db: Session,

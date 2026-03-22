@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 import os
 
 from app.models import init_db, get_engine, get_session_maker
-from app.routes import auth, properties, agents, verification, interactions, ussd, admin
+from app.routes import auth, properties, agents, verification, interactions, ussd, admin, chat
 
 # Database setup
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./reallink.db")
@@ -59,6 +59,7 @@ app.include_router(verification.router, prefix="/api/verification", tags=["Verif
 app.include_router(interactions.router, prefix="/api/interactions", tags=["Interactions"])
 app.include_router(ussd.router, prefix="/api/ussd", tags=["USSD/SMS"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat Assistant"])
 
 
 @app.get("/")

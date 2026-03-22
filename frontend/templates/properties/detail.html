@@ -176,6 +176,15 @@
                     View on RealScan
                 </a>
 
+                <!-- Timeline Link -->
+                <a href="{{ url_for('property_timeline', property_id=prop.id) }}"
+                   class="block text-center w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    View Timeline
+                </a>
+
                 {% if current_user.is_authenticated and current_user.id == prop.owner_id %}
                 <hr class="my-4">
                 <a href="{{ url_for('edit_property', property_id=prop.id) }}"
@@ -191,6 +200,33 @@
                     </button>
                 </form>
                 {% endif %}
+                
+                <!-- Image Upload -->
+                <hr class="my-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Upload Image</h3>
+                    <form action="{{ url_for('upload_property_image', property_id=prop.id) }}" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="image" accept="image/*" required
+                               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        <button type="submit"
+                                class="mt-2 w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 text-sm">
+                            Upload Image
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+                
+                <!-- Rate Agent (for completed deals) -->
+                {% if current_user.is_authenticated and prop.status in ['SOLD', 'FULLY_RENTED'] %}
+                <hr class="my-4">
+                <div class="bg-purple-50 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-purple-700 mb-2">Deal Completed!</h3>
+                    <p class="text-xs text-purple-600 mb-3">Rate your agent for this transaction.</p>
+                    <a href="{{ url_for('rate_agent', property_id=prop.id) }}?agent_id=1"
+                       class="block text-center w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 text-sm">
+                        Rate Your Agent
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>

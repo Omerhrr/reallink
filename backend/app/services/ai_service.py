@@ -264,6 +264,45 @@ Focus on the most important factors and actionable advice.
             data = response.json()
             return data["choices"][0]["message"]["content"]
 
+    async def _call_openrouter_with_system(
+        self,
+        system_prompt: str,
+        messages: List[Dict[str, str]]
+    ) -> str:
+        """Make API call to OpenRouter with custom system prompt and conversation history"""
+        if not self.api_key:
+            raise ValueError("OpenRouter API key not configured")
+
+        # Build messages array with system prompt
+        full_messages = [
+            {
+                "role": "system",
+                "content": system_prompt
+            }
+        ] + messages
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://reallink.africa",
+                    "X-Title": "RealLink Ecosystem"
+                },
+                json={
+                    "model": self.model,
+                    "messages": full_messages,
+                    "temperature": 0.7,
+                    "max_tokens": 1500
+                },
+                timeout=30.0
+            )
+
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+
 
 # Create default instance
 ai_service = AIService()
