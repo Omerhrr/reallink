@@ -624,6 +624,47 @@ def agent_detail(agent_id):
     return redirect(url_for('agents_list'))
 
 
+@app.route('/agents/<int:agent_id>/request-assignment', methods=['POST'])
+@login_required
+def request_agent_assignment(agent_id):
+    """Request an agent for a property assignment (owner)"""
+    property_id = request.form.get('property_id')
+    notes = request.form.get('notes', '')
+
+    if not property_id:
+        flash('Please select a property', 'error')
+        return redirect(url_for('agent_detail', agent_id=agent_id))
+
+    data = {
+        'property_id': int(property_id),
+        'notes': notes
+    }
+
+    response = api_call('POST', f'/agents/assignments/request', data=data)
+
+    if response and response.status_code == 200:
+        flash('Assignment request sent successfully!', 'success')
+    else:
+        error = response.json().get('detail', 'Failed to request assignment') if response else 'Failed to request assignment'
+        flash(error, 'error')
+
+    return redirect(url_for('agent_detail', agent_id=agent_id))
+
+
+@app.route('/agents/assignments/<int:assignment_id>/approve', methods=['POST'])
+@login_required
+def approve_agent_assignment(assignment_id):
+    """Approve an agent assignment (owner)"""
+    response = api_call('POST', f'/agents/assignments/{assignment_id}/approve')
+
+    if response and response.status_code == 200:
+        flash('Assignment approved!', 'success')
+    else:
+        flash('Failed to approve assignment', 'error')
+
+    return redirect(url_for('dashboard'))
+
+
 # ==================== INTERACTION ROUTES ====================
 
 @app.route('/interests/<int:property_id>', methods=['POST'])
@@ -792,62 +833,6 @@ def rate_agent(property_id):
                           previous_ratings=previous_ratings[:5])
 
 
-# ==================== IMAGE UPLOAD ROUTES ====================
-
-@app.route('/properties/<int:property_id>/images/upload', methods=['POST'])
-@login_required
-def upload_property_image(property_id):
-    """Upload property image"""
-    if 'image' not in request.files:
-        flash('No image file provided', 'error')
-        return redirect(url_for('property_detail', property_id=property_id))
-
-    file = request.files['image']
-    if file.filename == '':
-        flash('No image selected', 'error')
-        return redirect(url_for('property_detail', property_id=property_id))
-
-    # Upload to backend API
-    files = {'file': (file.filename, file.stream, file.content_type)}
-    data = {
-        'caption': request.form.get('caption', ''),
-        'is_primary': request.form.get('is_primary', 'false')
-    }
-
-    # For file upload, we need to use requests directly
-    try:
-        response = requests.post(
-            f"{API_URL}/properties/{property_id}/images",
-            files=files,
-            data=data,
-            headers=get_auth_headers()
-        )
-
-        if response.status_code == 200:
-            flash('Image uploaded successfully!', 'success')
-        else:
-            error = response.json().get('detail', 'Failed to upload image')
-            flash(error, 'error')
-    except Exception as e:
-        flash(f'Error uploading image: {str(e)}', 'error')
-
-    return redirect(url_for('property_detail', property_id=property_id))
-
-
-@app.route('/properties/<int:property_id>/images/<int:image_id>/delete', methods=['POST'])
-@login_required
-def delete_property_image(property_id, image_id):
-    """Delete property image"""
-    response = api_call('DELETE', f'/properties/{property_id}/images/{image_id}')
-
-    if response and response.status_code == 200:
-        flash('Image deleted successfully!', 'success')
-    else:
-        flash('Failed to delete image', 'error')
-
-    return redirect(url_for('property_detail', property_id=property_id))
-
-
 # ==================== ADMIN ROUTES ====================
 
 @app.route('/admin/dashboard')
@@ -889,6 +874,117 @@ def admin_dashboard():
                           documents=documents[:10],
                           disputes=disputes[:10],
                           alerts=alerts[:10])
+
+
+@app.route('/admin/documents/<int:doc_id>/verify', methods=['POST'])
+@login_required
+def admin_verify_document(doc_id):
+    """Verify a document (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    response = api_call('POST', f'/admin/documents/{doc_id}/verify')
+
+    if response and response.status_code == 200:
+        flash('Document verified successfully!', 'success')
+    else:
+        flash('Failed to verify document', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/documents/<int:doc_id>/reject', methods=['POST'])
+@login_required
+def admin_reject_document(doc_id):
+    """Reject a document (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    reason = request.form.get('reason', 'Document rejected')
+    response = api_call('POST', f'/admin/documents/{doc_id}/reject', data={'reason': reason})
+
+    if response and response.status_code == 200:
+        flash('Document rejected', 'success')
+    else:
+        flash('Failed to reject document', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/disputes/<int:dispute_id>/resolve', methods=['POST'])
+@login_required
+def admin_resolve_dispute(dispute_id):
+    """Resolve a dispute (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    resolution = request.form.get('resolution', '')
+    response = api_call('POST', f'/admin/disputes/{dispute_id}/resolve', data={'resolution': resolution})
+
+    if response and response.status_code == 200:
+        flash('Dispute resolved successfully!', 'success')
+    else:
+        flash('Failed to resolve dispute', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/fraud-alerts/<int:alert_id>/resolve', methods=['POST'])
+@login_required
+def admin_resolve_fraud_alert(alert_id):
+    """Resolve a fraud alert (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    response = api_call('POST', f'/admin/fraud-alerts/{alert_id}/resolve')
+
+    if response and response.status_code == 200:
+        flash('Fraud alert resolved!', 'success')
+    else:
+        flash('Failed to resolve fraud alert', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/users/<int:user_id>/role', methods=['POST'])
+@login_required
+def admin_update_user_role(user_id):
+    """Update user role (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    new_role = request.form.get('role')
+    response = api_call('PUT', f'/admin/users/{user_id}/role', data={'role': new_role})
+
+    if response and response.status_code == 200:
+        flash('User role updated!', 'success')
+    else:
+        flash('Failed to update user role', 'error')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/agents/<int:agent_id>/verify', methods=['POST'])
+@login_required
+def admin_verify_agent(agent_id):
+    """Verify an agent (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    response = api_call('POST', f'/admin/agents/{agent_id}/verify')
+
+    if response and response.status_code == 200:
+        flash('Agent verified successfully!', 'success')
+    else:
+        flash('Failed to verify agent', 'error')
+
+    return redirect(url_for('admin_dashboard'))
 
 
 if __name__ == '__main__':

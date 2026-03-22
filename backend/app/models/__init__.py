@@ -69,6 +69,29 @@ class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
 
 
+class OfferStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
+    COUNTERED = "COUNTERED"
+
+
+class PaymentStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    REFUNDED = "REFUNDED"
+
+
+class PaymentType(str, enum.Enum):
+    PURCHASE = "PURCHASE"
+    RENT = "RENT"
+    DEPOSIT = "DEPOSIT"
+    COMMISSION = "COMMISSION"
+
+
 # ==================== MODELS ====================
 
 class User(Base):
