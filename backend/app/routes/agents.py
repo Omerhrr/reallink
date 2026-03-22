@@ -80,26 +80,49 @@ async def create_agent_profile(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/profile", response_model=AgentResponse)
+@router.get("/profile", response_model=dict)
 async def get_my_agent_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get agent profile for current user"""
+    """Get agent profile for current user with assignments"""
     agent = db.query(Agent).filter(Agent.user_id == current_user.id).first()
 
     if not agent:
         raise HTTPException(status_code=404, detail="Agent profile not found")
 
-    return AgentResponse(
-        id=agent.id,
-        user_id=agent.user_id,
-        license_number=agent.license_number,
-        rating=agent.rating,
-        verified=agent.verified,
-        total_deals=agent.total_deals,
-        created_at=agent.created_at
-    )
+    # Get assignments
+    assignments = db.query(PropertyAgent).filter(
+        PropertyAgent.agent_id == agent.id
+    ).all()
+
+    return {
+        "agent": AgentResponse(
+            id=agent.id,
+            user_id=agent.user_id,
+            license_number=agent.license_number,
+            rating=agent.rating,
+            verified=agent.verified,
+            total_deals=agent.total_deals,
+            created_at=agent.created_at
+        ),
+        "user": {
+            "name": agent.user.name,
+            "phone": agent.user.phone,
+            "email": agent.user.email
+        },
+        "assignments": [
+            AssignmentResponse(
+                id=a.id,
+                property_id=a.property_id,
+                agent_id=a.agent_id,
+                status=a.status.value,
+                assigned_at=a.assigned_at,
+                completed_at=a.completed_at,
+                notes=a.notes
+            ) for a in assignments
+        ]
+    }
 
 
 @router.get("/", response_model=List[AgentResponse])
