@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
-from app.models import Interest, Dispute, Transaction, Property, InterestStatus, DisputeStatus, User
+from app.models import Interest, Dispute, Transaction, Property, InterestStatus, DisputeStatus, User, UserRole
 from app.dependencies import get_db
 from app.routes.auth import get_current_user
 
@@ -246,13 +246,14 @@ async def resolve_dispute(
     db: Session = Depends(get_db)
 ):
     """Resolve a dispute (admin only)"""
+    # Check if user is admin
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can resolve disputes")
+
     dispute = db.query(Dispute).filter(Dispute.id == dispute_id).first()
 
     if not dispute:
         raise HTTPException(status_code=404, detail="Dispute not found")
-
-    # In production, check if user is admin
-    # For now, allow property owner to resolve
 
     try:
         dispute.status = DisputeStatus(status.upper())

@@ -207,6 +207,26 @@ async def get_property(
         PropertyImage.property_id == property_id
     ).order_by(PropertyImage.order).all()
 
+    # Get active agent assignments
+    from app.models import PropertyAgent, AgentAssignmentStatus, Agent
+    agent_assignments = db.query(PropertyAgent).filter(
+        PropertyAgent.property_id == property_id,
+        PropertyAgent.status == AgentAssignmentStatus.ACTIVE
+    ).all()
+
+    # Get agents for assignments
+    assigned_agents = []
+    for assignment in agent_assignments:
+        agent = db.query(Agent).filter(Agent.id == assignment.agent_id).first()
+        if agent:
+            assigned_agents.append({
+                "id": agent.id,
+                "name": agent.user.name if agent.user else "Unknown",
+                "rating": agent.rating,
+                "total_deals": agent.total_deals,
+                "verified": agent.verified
+            })
+
     # Calculate trust score
     trust_service = TrustScoreService(db)
     trust_score = trust_service.calculate_property_trust_score(property_id)
@@ -259,6 +279,7 @@ async def get_property(
                 "created_at": img.created_at.isoformat()
             } for img in images
         ],
+        "assigned_agents": assigned_agents,
         "trust_score": trust_score
     }
 
@@ -356,13 +377,18 @@ async def mark_under_offer(
         raise HTTPException(status_code=404, detail="Property not found")
 
     # Check permission - owner or active agent
-    from app.models import PropertyAgent, AgentAssignmentStatus
+    from app.models import PropertyAgent, AgentAssignmentStatus, Agent
     is_owner = property_obj.owner_id == current_user.id
-    is_active_agent = db.query(PropertyAgent).filter(
-        PropertyAgent.property_id == property_id,
-        PropertyAgent.agent_id == current_user.id if hasattr(current_user, 'agent_id') else 0,
-        PropertyAgent.status == AgentAssignmentStatus.ACTIVE
-    ).first() is not None
+    
+    # Check if user is an agent and has active assignment
+    agent = db.query(Agent).filter(Agent.user_id == current_user.id).first()
+    is_active_agent = False
+    if agent:
+        is_active_agent = db.query(PropertyAgent).filter(
+            PropertyAgent.property_id == property_id,
+            PropertyAgent.agent_id == agent.id,
+            PropertyAgent.status == AgentAssignmentStatus.ACTIVE
+        ).first() is not None
 
     if not (is_owner or is_active_agent):
         raise HTTPException(status_code=403, detail="Only owner or active agent can mark property as under offer")

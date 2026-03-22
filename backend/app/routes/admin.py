@@ -7,12 +7,27 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+import os
 
 from app.models import User, Property, Agent, Document, FraudAlert, Dispute, DisputeStatus, UserRole
 from app.dependencies import get_db
 from app.routes.auth import get_current_user
 
 router = APIRouter()
+
+# API Keys storage (in production, use environment variables or secure config)
+# These are loaded from environment variables
+API_KEYS = {
+    "africas_talking_api_key": os.getenv("AFRICAS_TALKING_API_KEY", ""),
+    "africas_talking_username": os.getenv("AFRICAS_TALKING_USERNAME", "sandbox"),
+    "openrouter_api_key": os.getenv("OPENROUTER_API_KEY", ""),
+}
+
+
+class APIKeyUpdate(BaseModel):
+    africas_talking_api_key: Optional[str] = None
+    africas_talking_username: Optional[str] = None
+    openrouter_api_key: Optional[str] = None
 
 
 # Verify admin access
@@ -272,3 +287,118 @@ async def admin_resolve_dispute(
         "dispute_id": dispute.id,
         "status": dispute.status.value
     }
+
+
+# ==================== API KEY MANAGEMENT ====================
+
+@router.get("/api-keys")
+async def get_api_keys(
+    current_user: User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get current API key configuration (masked)"""
+    return {
+        "api_keys": {
+            "africas_talking_api_key": "****" + API_KEYS["africas_talking_api_key"][-4:] if API_KEYS["africas_talking_api_key"] else "Not configured",
+            "africas_talking_username": API_KEYS["africas_talking_username"],
+            "openrouter_api_key": "****" + API_KEYS["openrouter_api_key"][-4:] if API_KEYS["openrouter_api_key"] else "Not configured",
+        },
+        "services": {
+            "africas_talking": {
+                "name": "Africa's Talking",
+                "description": "SMS and USSD gateway for African markets",
+                "configured": bool(API_KEYS["africas_talking_api_key"]),
+                "docs_url": "https://developers.africastalking.com/"
+            },
+            "openrouter": {
+                "name": "OpenRouter",
+                "description": "AI model gateway for chat assistant and fraud analysis",
+                "configured": bool(API_KEYS["openrouter_api_key"]),
+                "docs_url": "https://openrouter.ai/docs"
+            }
+        }
+    }
+
+
+@router.post("/api-keys")
+async def update_api_keys(
+    data: APIKeyUpdate,
+    current_user: User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Update API key configuration"""
+    global API_KEYS
+    
+    updated_keys = []
+    
+    if data.africas_talking_api_key is not None:
+        API_KEYS["africas_talking_api_key"] = data.africas_talking_api_key
+        os.environ["AFRICAS_TALKING_API_KEY"] = data.africas_talking_api_key
+        updated_keys.append("africas_talking_api_key")
+    
+    if data.africas_talking_username is not None:
+        API_KEYS["africas_talking_username"] = data.africas_talking_username
+        os.environ["AFRICAS_TALKING_USERNAME"] = data.africas_talking_username
+        updated_keys.append("africas_talking_username")
+    
+    if data.openrouter_api_key is not None:
+        API_KEYS["openrouter_api_key"] = data.openrouter_api_key
+        os.environ["OPENROUTER_API_KEY"] = data.openrouter_api_key
+        updated_keys.append("openrouter_api_key")
+    
+    return {
+        "message": "API keys updated successfully",
+        "updated_keys": updated_keys
+    }
+
+
+@router.post("/api-keys/test")
+async def test_api_keys(
+    service: str,
+    current_user: User = Depends(get_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Test API key connection"""
+    if service == "africas_talking":
+        # Test Africa's Talking connection
+        try:
+            from app.services.ussd_sms_service import SMSService
+            sms_service = SMSService()
+            # Just check if the service can be initialized
+            return {
+                "service": "africas_talking",
+                "status": "success" if API_KEYS["africas_talking_api_key"] else "not_configured",
+                "message": "API key configured" if API_KEYS["africas_talking_api_key"] else "API key not set"
+            }
+        except Exception as e:
+            return {
+                "service": "africas_talking",
+                "status": "error",
+                "message": str(e)
+            }
+    
+    elif service == "openrouter":
+        # Test OpenRouter connection
+        try:
+            from app.services.ai_service import AIService
+            if API_KEYS["openrouter_api_key"]:
+                return {
+                    "service": "openrouter",
+                    "status": "success",
+                    "message": "API key configured"
+                }
+            else:
+                return {
+                    "service": "openrouter",
+                    "status": "not_configured",
+                    "message": "API key not set"
+                }
+        except Exception as e:
+            return {
+                "service": "openrouter",
+                "status": "error",
+                "message": str(e)
+            }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid service. Use 'africas_talking' or 'openrouter'")

@@ -176,7 +176,7 @@ function chatApp() {
             this.scrollToBottom();
 
             try {
-                const response = await fetch('/api/chat/message', {
+                const response = await fetch('/chat/message', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

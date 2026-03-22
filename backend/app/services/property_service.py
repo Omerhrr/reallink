@@ -18,6 +18,7 @@ from app.utils import (
 from app.services.state_machine import (
     PropertyStateMachine, UnitStateMachine, PermissionChecker, TransitionError
 )
+from app.services.ledger_service import LedgerService
 import asyncio
 
 
@@ -60,6 +61,13 @@ class PropertyService:
         self.db.add(property_obj)
         self.db.commit()
         self.db.refresh(property_obj)
+
+        # Create initial ownership record in the ledger
+        ledger_service = LedgerService(self.db)
+        ledger_service.create_initial_record(
+            property_id=property_obj.id,
+            owner_id=owner_id
+        )
 
         return property_obj
 

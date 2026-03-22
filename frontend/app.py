@@ -991,6 +991,54 @@ def admin_verify_agent(agent_id):
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/admin/api-keys/status')
+@login_required
+def admin_api_keys_status():
+    """Get API keys status (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        return jsonify({'error': 'Admin access required'}), 403
+
+    response = api_call('GET', '/admin/api-keys')
+    
+    if response and response.status_code == 200:
+        data = response.json()
+        return jsonify({
+            'africas_talking_configured': data.get('api_keys', {}).get('africas_talking_configured', False),
+            'openrouter_configured': data.get('services', {}).get('openrouter', {}).get('configured', False)
+        })
+    
+    return jsonify({'africas_talking_configured': False, 'openrouter_configured': False})
+
+
+@app.route('/admin/api-keys', methods=['POST'])
+@login_required
+def admin_update_api_keys():
+    """Update API keys (admin only)"""
+    if session.get('user_role') != 'ADMIN':
+        flash('Admin access required', 'error')
+        return redirect(url_for('dashboard'))
+
+    data = {}
+    if request.form.get('africas_talking_api_key'):
+        data['africas_talking_api_key'] = request.form.get('africas_talking_api_key')
+    if request.form.get('africas_talking_username'):
+        data['africas_talking_username'] = request.form.get('africas_talking_username')
+    if request.form.get('openrouter_api_key'):
+        data['openrouter_api_key'] = request.form.get('openrouter_api_key')
+
+    if data:
+        response = api_call('POST', '/admin/api-keys', data=data)
+        
+        if response and response.status_code == 200:
+            flash('API keys updated successfully!', 'success')
+        else:
+            flash('Failed to update API keys', 'error')
+    else:
+        flash('No API keys provided', 'warning')
+
+    return redirect(url_for('admin_dashboard'))
+
+
 # ==================== STATIC FILE SERVING ====================
 
 @app.route('/static/uploads/<path:filename>')
