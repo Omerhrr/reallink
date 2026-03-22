@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ property.property.title if property.property else property.title }} - RealLink{% endblock %}
+
+{% block content %}
+{% set prop = property.property if property.property else property %}
+
+<div class="mb-6">
+    <a href="{{ url_for('properties_list') }}" class="text-emerald-600 hover:underline flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Properties
+    </a>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Property Header -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Image Placeholder -->
+            <div class="h-64 bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center">
+                <svg class="w-24 h-24 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+            </div>
+
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span class="text-xs px-2 py-1 rounded-full
+                            {% if prop.property_type == 'SALE' %}bg-blue-100 text-blue-700
+                            {% else %}bg-purple-100 text-purple-700{% endif %}">
+                            {% if prop.property_type == 'SALE' %}For Sale{% else %}For Rent{% endif %}
+                        </span>
+                        <span class="ml-2 text-xs px-2 py-1 rounded-full
+                            {% if prop.status == 'LISTED' %}bg-green-100 text-green-700
+                            {% elif prop.status == 'DRAFT' %}bg-gray-100 text-gray-700
+                            {% elif prop.status == 'SOLD' %}bg-blue-100 text-blue-700
+                            {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                            {{ prop.status }}
+                        </span>
+                    </div>
+                    <span class="text-sm text-gray-500">{{ prop.property_id }}</span>
+                </div>
+
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ prop.title }}</h1>
+                <p class="text-gray-600 mb-4">{{ prop.location }}</p>
+
+                <div class="flex items-center justify-between">
+                    <p class="text-2xl font-bold text-emerald-600">
+                        ₦{{ "{:,.0f}".format(prop.price) if prop.price else 'Price on request' }}
+                    </p>
+                    <div class="flex items-center text-gray-500">
+                        <span class="mr-4">{{ prop.bedrooms }} bed</span>
+                        <span class="mr-4">{{ prop.bathrooms }} bath</span>
+                        {% if prop.area_sqm %}<span>{{ prop.area_sqm }} sqm</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        {% if prop.description %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Description</h2>
+            <p class="text-gray-600 whitespace-pre-line">{{ prop.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Units -->
+        {% if property.units %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Units</h2>
+            <div class="space-y-3">
+                {% for unit in property.units %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <div class="font-medium text-gray-900">{{ unit.name }}</div>
+                        <div class="text-sm text-gray-600">₦{{ "{:,.0f}".format(unit.price) }}/month</div>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full
+                        {% if unit.status == 'AVAILABLE' %}bg-green-100 text-green-700
+                        {% elif unit.status == 'RENTED' %}bg-red-100 text-red-700
+                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {{ unit.status }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Documents -->
+        {% if property.documents %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Documents</h2>
+            <div class="space-y-2">
+                {% for doc in property.documents %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">{{ doc.file_name }}</div>
+                            <div class="text-xs text-gray-500">{{ doc.doc_type }}</div>
+                        </div>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full
+                        {% if doc.verified %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {% if doc.verified %}Verified{% else %}Pending{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Trust Score -->
+        {% if property.trust_score %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Trust Score</h2>
+            <div class="text-center">
+                <div class="text-5xl font-bold
+                    {% if property.trust_score.score >= 70 %}text-green-600
+                    {% elif property.trust_score.score >= 40 %}text-yellow-600
+                    {% else %}text-red-600{% endif %}">
+                    {{ property.trust_score.score }}
+                </div>
+                <div class="text-gray-500 text-sm">out of 100</div>
+
+                <!-- Progress Bar -->
+                <div class="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full
+                        {% if property.trust_score.score >= 70 %}bg-green-500
+                        {% elif property.trust_score.score >= 40 %}bg-yellow-500
+                        {% else %}bg-red-500{% endif %}"
+                        style="width: {{ property.trust_score.score }}%"></div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <a href="{{ url_for('realscan_detail', property_id=prop.id) }}"
+                   class="block text-center text-emerald-600 hover:underline text-sm">
+                    View Full Verification →
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
+            <div class="space-y-3">
+                {% if current_user.is_authenticated %}
+                <form action="{{ url_for('express_interest', property_id=prop.id) }}" method="POST">
+                    <button type="submit"
+                            class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition">
+                        Express Interest
+                    </button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('login') }}"
+                   class="block text-center w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition">
+                    Login to Express Interest
+                </a>
+                {% endif %}
+
+                <a href="{{ url_for('realscan_detail', property_id=prop.id) }}"
+                   class="block text-center w-full border border-emerald-600 text-emerald-600 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition">
+                    View on RealScan
+                </a>
+
+                {% if current_user.is_authenticated and current_user.id == prop.owner_id %}
+                <hr class="my-4">
+                <a href="{{ url_for('edit_property', property_id=prop.id) }}"
+                   class="block text-center w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition">
+                    Edit Property
+                </a>
+
+                {% if prop.status == 'DRAFT' %}
+                <form action="{{ url_for('list_property', property_id=prop.id) }}" method="POST">
+                    <button type="submit"
+                            class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+                        List Property
+                    </button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Add Unit (Owner Only) -->
+        {% if current_user.is_authenticated and current_user.id == prop.owner_id and prop.property_type == 'RENT' %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Add Unit</h2>
+            <form action="{{ url_for('create_unit', property_id=prop.id) }}" method="POST">
+                <div class="space-y-3">
+                    <input type="text" name="name" required placeholder="Unit name"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <input type="number" name="price" required placeholder="Price/month"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <button type="submit"
+                            class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700">
+                        Add Unit
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

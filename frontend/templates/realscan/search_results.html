@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - RealScan{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{{ url_for('realscan_explorer') }}" class="text-emerald-600 hover:underline flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to RealScan
+    </a>
+</div>
+
+<!-- Search Header -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <h1 class="text-xl font-bold text-gray-900 mb-2">Search Results</h1>
+    <p class="text-gray-600">Found {{ total_found }} result(s) for "<span class="font-medium">{{ query }}</span>"</p>
+</div>
+
+<!-- Properties Results -->
+{% if results.properties %}
+<div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Properties ({{ results.properties|length }})</h2>
+    <div class="space-y-3">
+        {% for prop in results.properties %}
+        <a href="{{ url_for('realscan_detail', property_id=prop.id) }}" 
+           class="block bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs font-mono text-gray-500">{{ prop.property_id }}</span>
+                        <span class="px-2 py-1 rounded text-xs
+                            {% if prop.trust_score >= 70 %}bg-green-100 text-green-700
+                            {% elif prop.trust_score >= 40 %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            Trust: {{ prop.trust_score }}
+                        </span>
+                    </div>
+                    <h3 class="font-semibold text-gray-900">{{ prop.title }}</h3>
+                    <p class="text-sm text-gray-600">{{ prop.location }}</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Ownership Records Results -->
+{% if results.ownership_records %}
+<div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Ownership Transfers ({{ results.ownership_records|length }})</h2>
+    <div class="space-y-3">
+        {% for record in results.ownership_records %}
+        <a href="{{ url_for('transfer_detail', record_id=record.id) }}" 
+           class="block bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <code class="text-xs text-emerald-600 font-mono">{{ record.current_hash }}</code>
+                        <span class="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700">{{ record.transaction_type }}</span>
+                    </div>
+                    <h3 class="font-medium text-gray-900">{{ record.property_title }}</h3>
+                    <p class="text-sm text-gray-500">{{ record.timestamp[:10] if record.timestamp else 'N/A' }}</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Documents Results -->
+{% if results.documents %}
+<div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Documents ({{ results.documents|length }})</h2>
+    <div class="space-y-3">
+        {% for doc in results.documents %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-medium text-gray-900">{{ doc.file_name }}</h3>
+                            <span class="px-2 py-1 rounded text-xs
+                                {% if doc.verified %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                                {% if doc.verified %}Verified{% else %}Pending{% endif %}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500">{{ doc.doc_type }} • {{ doc.property_title }}</p>
+                        <code class="text-xs text-gray-400">{{ doc.doc_hash }}</code>
+                    </div>
+                </div>
+                <a href="{{ url_for('realscan_detail', property_id=doc.property_id) }}" 
+                   class="text-emerald-600 hover:underline text-sm">View Property →</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- No Results -->
+{% if total_found == 0 %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+    <p class="text-gray-600">Try searching with a different term</p>
+    
+    <!-- Search Again -->
+    <form action="{{ url_for('realscan_search') }}" method="GET" class="max-w-md mx-auto mt-6">
+        <div class="flex gap-2">
+            <input type="text" name="q" placeholder="Search again..."
+                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700">
+                Search
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

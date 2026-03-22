@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ agent.user.name }} - Agent Profile{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{{ url_for('agents_list') }}" class="text-emerald-600 hover:underline flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Agents
+    </a>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Agent Profile -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-start">
+                <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <svg class="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <div class="ml-6 flex-1">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-900">{{ agent.user.name }}</h1>
+                        {% if agent.agent.verified %}
+                        <span class="ml-2 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium">
+                            Verified
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-600">{{ agent.user.phone or 'Phone not available' }}</p>
+                    <p class="text-gray-600">{{ agent.user.email or 'Email not available' }}</p>
+
+                    <div class="flex items-center mt-4">
+                        <div class="flex items-center">
+                            {% for i in range(5) %}
+                            <svg class="w-5 h-5 {% if i < agent.agent.rating|round %}text-yellow-400{% else %}text-gray-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            {% endfor %}
+                            <span class="text-lg font-semibold text-gray-900 ml-2">{{ agent.agent.rating|round(1) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+                <div class="text-2xl font-bold text-emerald-600">{{ agent.agent.total_deals }}</div>
+                <div class="text-sm text-gray-600">Deals Closed</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+                <div class="text-2xl font-bold text-blue-600">{{ agent.assignments|length }}</div>
+                <div class="text-sm text-gray-600">Total Assignments</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900">{{ agent.agent.license_number or 'N/A' }}</div>
+                <div class="text-sm text-gray-600">License</div>
+            </div>
+        </div>
+
+        <!-- Assignments -->
+        {% if agent.assignments %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Property Assignments</h2>
+            <div class="space-y-3">
+                {% for assignment in agent.assignments %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <div class="font-medium text-gray-900">Property #{{ assignment.property_id }}</div>
+                        <div class="text-xs text-gray-500">{{ assignment.assigned_at[:10] }}</div>
+                    </div>
+                    <span class="px-2 py-1 rounded text-xs
+                        {% if assignment.status == 'ACTIVE' %}bg-green-100 text-green-700
+                        {% elif assignment.status == 'COMPLETED' %}bg-blue-100 text-blue-700
+                        {% elif assignment.status == 'REQUESTED' %}bg-yellow-100 text-yellow-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ assignment.status }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Contact Agent</h2>
+            {% if current_user.is_authenticated %}
+            <div class="space-y-3">
+                <a href="tel:{{ agent.user.phone }}" class="block w-full text-center bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700">
+                    Call Agent
+                </a>
+                <a href="mailto:{{ agent.user.email }}" class="block w-full text-center border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50">
+                    Send Email
+                </a>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-600 mb-3">Login to contact this agent</p>
+            <a href="{{ url_for('login') }}" class="block w-full text-center bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700">
+                Login
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

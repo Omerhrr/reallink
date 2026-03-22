@@ -1,0 +1,23 @@
+<!-- Trust Score Component -->
+<div class="flex items-center">
+    <div class="w-10 h-10 rounded-full flex items-center justify-center
+        {% if trust_score.score >= 70 %}bg-green-100
+        {% elif trust_score.score >= 40 %}bg-yellow-100
+        {% else %}bg-red-100{% endif %}">
+        <span class="text-sm font-bold
+            {% if trust_score.score >= 70 %}text-green-600
+            {% elif trust_score.score >= 40 %}text-yellow-600
+            {% else %}text-red-600{% endif %}">
+            {{ trust_score.score }}
+        </span>
+    </div>
+    <div class="ml-2">
+        <div class="text-xs text-gray-500">Trust Score</div>
+        <div class="text-xs font-medium
+            {% if trust_score.score >= 70 %}text-green-600
+            {% elif trust_score.score >= 40 %}text-yellow-600
+            {% else %}text-red-600{% endif %}">
+            {% if trust_score.score >= 70 %}Low Risk{% elif trust_score.score >= 40 %}Medium Risk{% else %}High Risk{% endif %}
+        </div>
+    </div>
+</div>

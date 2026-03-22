@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}All Transfers - RealScan{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{{ url_for('realscan_explorer') }}" class="text-emerald-600 hover:underline flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to RealScan
+    </a>
+</div>
+
+<!-- Header -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <h1 class="text-xl font-bold text-gray-900">All Ownership Transfers</h1>
+    <p class="text-gray-600">Complete history of property ownership transfers</p>
+</div>
+
+<!-- Transfers Table - Etherscan Style -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Txn Hash</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Type</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Property</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Owner</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Amount</th>
+                <th class="text-left px-4 py-3 text-sm font-medium text-gray-500">Time</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for transfer in transfers %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3">
+                    <a href="{{ url_for('transfer_detail', record_id=transfer.record_id) }}" 
+                       class="text-emerald-600 hover:underline font-mono text-sm">
+                        {{ transfer.transaction_hash[:16] if transfer.transaction_hash else 'N/A' }}...
+                    </a>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded text-xs font-medium
+                        {% if transfer.transaction_type == 'SALE' %}bg-green-100 text-green-700
+                        {% elif transfer.transaction_type == 'TRANSFER' %}bg-blue-100 text-blue-700
+                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ transfer.transaction_type }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ transfer.property_title[:30] if transfer.property_title else 'Unknown' }}{% if transfer.property_title and transfer.property_title|length > 30 %}...{% endif %}</p>
+                        <p class="text-xs text-gray-500">{{ transfer.property_location[:30] if transfer.property_location else '' }}{% if transfer.property_location and transfer.property_location|length > 30 %}...{% endif %}</p>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-600">{{ transfer.owner_name }}</td>
+                <td class="px-4 py-3 text-sm font-medium text-emerald-600">
+                    {% if transfer.amount %}₦{{ "{:,.0f}".format(transfer.amount) }}{% else %}-{% endif %}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-500">{{ transfer.timestamp[:10] if transfer.timestamp else 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if transfers|length == 0 %}
+    <div class="p-12 text-center">
+        <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <p class="text-gray-500">No transfers recorded yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

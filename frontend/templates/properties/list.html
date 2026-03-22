@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Properties - RealLink{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Properties</h1>
+    <p class="text-gray-600">Browse verified properties across Africa</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+    <form method="GET" class="flex flex-wrap gap-4">
+        <div class="flex-1 min-w-[200px]">
+            <input type="text" name="location" placeholder="Location"
+                   value="{{ request.args.get('location', '') }}"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div>
+            <select name="type" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                <option value="">All Types</option>
+                <option value="SALE" {% if request.args.get('type') == 'SALE' %}selected{% endif %}>For Sale</option>
+                <option value="RENT" {% if request.args.get('type') == 'RENT' %}selected{% endif %}>For Rent</option>
+            </select>
+        </div>
+        <div>
+            <input type="number" name="min_price" placeholder="Min Price"
+                   value="{{ request.args.get('min_price', '') }}"
+                   class="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <div>
+            <input type="number" name="max_price" placeholder="Max Price"
+                   value="{{ request.args.get('max_price', '') }}"
+                   class="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        </div>
+        <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700">
+            Search
+        </button>
+    </form>
+</div>
+
+<!-- Property Grid -->
+{% if properties %}
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for prop in properties %}
+    <a href="{{ url_for('property_detail', property_id=prop.id) }}" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition group">
+        <!-- Property Image Placeholder -->
+        <div class="h-48 bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center">
+            <svg class="w-16 h-16 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+        </div>
+
+        <div class="p-4">
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-xs px-2 py-1 rounded-full
+                    {% if prop.property_type == 'SALE' %}bg-blue-100 text-blue-700
+                    {% else %}bg-purple-100 text-purple-700{% endif %}">
+                    {% if prop.property_type == 'SALE' %}For Sale{% else %}For Rent{% endif %}
+                </span>
+                <span class="text-xs text-gray-500">{{ prop.property_id }}</span>
+            </div>
+
+            <h3 class="font-semibold text-gray-900 group-hover:text-emerald-600 transition">{{ prop.title }}</h3>
+            <p class="text-sm text-gray-600 mt-1">{{ prop.location }}</p>
+
+            <div class="flex justify-between items-center mt-4">
+                <p class="text-lg font-bold text-emerald-600">
+                    ₦{{ "{:,.0f}".format(prop.price) if prop.price else 'Price on request' }}
+                </p>
+                <div class="flex items-center text-sm text-gray-500">
+                    <span class="mr-2">{{ prop.bedrooms }} bed</span>
+                    <span>{{ prop.bathrooms }} bath</span>
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">No properties found</h3>
+    <p class="text-gray-600">Try adjusting your search filters</p>
+</div>
+{% endif %}
+{% endblock %}

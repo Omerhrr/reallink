@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}RealScan Explorer - RealLink{% endblock %}
+
+{% block content %}
+<!-- RealScan Header - Etherscan Style -->
+<div class="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-xl p-8 mb-8 text-white">
+    <div class="text-center">
+        <h1 class="text-3xl font-bold mb-2">
+            <svg class="w-8 h-8 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            RealScan
+        </h1>
+        <p class="text-emerald-100 mb-6">Real Estate Verification Explorer - Like Etherscan for Properties</p>
+        
+        <!-- Search Bar - Etherscan Style -->
+        <form action="{{ url_for('realscan_search') }}" method="GET" class="max-w-2xl mx-auto">
+            <div class="flex gap-2">
+                <input type="text" name="q" placeholder="Search by Property ID, Hash, or Owner..."
+                       value="{{ request.args.get('q', '') }}"
+                       class="flex-1 px-6 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-emerald-300 focus:outline-none">
+                <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 px-6 py-3 rounded-lg font-medium transition">
+                    Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Statistics Cards - Etherscan Style -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Total Properties</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.properties.total if stats else 0 }}</p>
+            </div>
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Total Transfers</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.transfers.total if stats else 0 }}</p>
+            </div>
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Avg Trust Score</p>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.trust_scores.average if stats else 0 }}</p>
+            </div>
+            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Market Value</p>
+                <p class="text-lg font-bold text-gray-900">{{ stats.market.formatted_value if stats else 'N/A' }}</p>
+            </div>
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-8">
+    <!-- Main Content - Property List -->
+    <div class="lg:col-span-2">
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <form method="GET" class="flex flex-wrap gap-4">
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" name="location" placeholder="Filter by location"
+                           value="{{ request.args.get('location', '') }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <select name="type" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="">All Types</option>
+                        <option value="SALE" {% if request.args.get('type') == 'SALE' %}selected{% endif %}>For Sale</option>
+                        <option value="RENT" {% if request.args.get('type') == 'RENT' %}selected{% endif %}>For Rent</option>
+                    </select>
+                </div>
+                <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700">
+                    Filter
+                </button>
+            </form>
+        </div>
+
+        <!-- Properties Grid -->
+        {% if data.properties %}
+        <div class="space-y-4">
+            {% for prop in data.properties %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ prop.property_id }}</span>
+                            <span class="px-2 py-1 rounded text-xs font-medium
+                                {% if prop.trust_score >= 70 %}bg-green-100 text-green-700
+                                {% elif prop.trust_score >= 40 %}bg-yellow-100 text-yellow-700
+                                {% else %}bg-red-100 text-red-700{% endif %}">
+                                Trust: {{ prop.trust_score }}
+                            </span>
+                        </div>
+                        <h3 class="font-semibold text-gray-900">{{ prop.title }}</h3>
+                        <p class="text-sm text-gray-600">{{ prop.location }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-emerald-600 font-semibold">₦{{ "{:,.0f}".format(prop.price) if prop.price else 'N/A' }}</p>
+                        <a href="{{ url_for('realscan_detail', property_id=prop.id) }}"
+                           class="text-sm text-emerald-600 hover:underline inline-flex items-center mt-2">
+                            View Details
+                            <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No verified properties found</h3>
+            <p class="text-gray-600">Properties with verified documents will appear here</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar - Recent Transfers (Like Etherscan) -->
+    <div class="space-y-6">
+        <!-- Recent Transfers -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <h2 class="font-semibold text-gray-900">Latest Transfers</h2>
+            </div>
+            {% if recent_transfers %}
+            <div class="divide-y divide-gray-100">
+                {% for transfer in recent_transfers[:5] %}
+                <a href="{{ url_for('transfer_detail', record_id=transfer.record_id) }}" class="block p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-mono text-emerald-600">{{ transfer.transaction_hash[:16] if transfer.transaction_hash else 'N/A' }}...</span>
+                        <span class="text-xs text-gray-500">{{ transfer.timestamp[:10] if transfer.timestamp else 'N/A' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-900">{{ transfer.property_title[:25] if transfer.property_title else 'Unknown' }}...</span>
+                        <span class="text-xs px-2 py-1 rounded
+                            {% if transfer.transaction_type == 'SALE' %}bg-green-100 text-green-700
+                            {% elif transfer.transaction_type == 'TRANSFER' %}bg-blue-100 text-blue-700
+                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ transfer.transaction_type }}
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                <a href="{{ url_for('all_transfers') }}" class="text-sm text-emerald-600 hover:underline">View all transfers →</a>
+            </div>
+            {% else %}
+            <div class="p-6 text-center text-gray-500">
+                <p class="text-sm">No recent transfers</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Trust Score Distribution -->
+        {% if stats and stats.trust_scores.distribution %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <h2 class="font-semibold text-gray-900 mb-4">Trust Score Distribution</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">High (70+)</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500 rounded-full" style="width: {{ (stats.trust_scores.distribution.high / stats.properties.total * 100) if stats.properties.total > 0 else 0 }}%"></div>
+                        </div>
+                        <span class="text-sm font-medium">{{ stats.trust_scores.distribution.high }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Medium (40-69)</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-yellow-500 rounded-full" style="width: {{ (stats.trust_scores.distribution.medium / stats.properties.total * 100) if stats.properties.total > 0 else 0 }}%"></div>
+                        </div>
+                        <span class="text-sm font-medium">{{ stats.trust_scores.distribution.medium }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Low (&lt;40)</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-red-500 rounded-full" style="width: {{ (stats.trust_scores.distribution.low / stats.properties.total * 100) if stats.properties.total > 0 else 0 }}%"></div>
+                        </div>
+                        <span class="text-sm font-medium">{{ stats.trust_scores.distribution.low }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Fraud Alerts Summary -->
+        {% if stats and stats.fraud.unresolved > 0 %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div class="flex items-center gap-3 mb-2">
+                <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <h3 class="font-semibold text-red-900">Fraud Alerts</h3>
+            </div>
+            <p class="text-sm text-red-700">{{ stats.fraud.unresolved }} unresolved alerts ({{ stats.fraud.high_severity }} high severity)</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

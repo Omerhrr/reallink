@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}RealLink Ecosystem - Fraud-resistant Real Estate{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative bg-emerald-700 rounded-2xl overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-emerald-800 to-emerald-600 opacity-90"></div>
+    <div class="relative px-8 py-16 sm:px-16 sm:py-24">
+        <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4">
+            Secure Real Estate<br>
+            <span class="text-emerald-200">For Africa</span>
+        </h1>
+        <p class="text-lg text-emerald-100 max-w-xl mb-8">
+            Property verification, ownership tracking, and fraud detection powered by AI.
+            Buy, sell, and rent with confidence.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <a href="{{ url_for('properties_list') }}" class="inline-flex items-center justify-center px-6 py-3 bg-white text-emerald-700 font-semibold rounded-lg hover:bg-emerald-50 transition">
+                Browse Properties
+            </a>
+            <a href="{{ url_for('realscan_explorer') }}" class="inline-flex items-center justify-center px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">
+                RealScan Explorer
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="mt-16 grid md:grid-cols-3 gap-8">
+    <!-- Feature 1 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Property Verification</h3>
+        <p class="text-gray-600">Document fingerprinting and hash-linked ownership ledger ensure property authenticity and traceability.</p>
+    </div>
+
+    <!-- Feature 2 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">AI Fraud Detection</h3>
+        <p class="text-gray-600">Advanced AI analyzes documents, ownership history, and pricing patterns to detect potential fraud risks.</p>
+    </div>
+
+    <!-- Feature 3 -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">USSD/SMS Access</h3>
+        <p class="text-gray-600">Access property listings and alerts via USSD and SMS, even without internet connection.</p>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="mt-16 bg-gray-900 rounded-2xl p-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div>
+            <div class="text-3xl font-bold text-white">10K+</div>
+            <div class="text-gray-400 mt-1">Properties Listed</div>
+        </div>
+        <div>
+            <div class="text-3xl font-bold text-white">500+</div>
+            <div class="text-gray-400 mt-1">Verified Agents</div>
+        </div>
+        <div>
+            <div class="text-3xl font-bold text-white">99%</div>
+            <div class="text-gray-400 mt-1">Fraud Detection</div>
+        </div>
+        <div>
+            <div class="text-3xl font-bold text-white">15+</div>
+            <div class="text-gray-400 mt-1">African Countries</div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="mt-16">
+    <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">How It Works</h2>
+    <div class="grid md:grid-cols-4 gap-6">
+        <div class="text-center">
+            <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold">1</div>
+            <h4 class="font-semibold text-gray-900">List Property</h4>
+            <p class="text-sm text-gray-600 mt-2">Owner submits property with documents</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold">2</div>
+            <h4 class="font-semibold text-gray-900">Verification</h4>
+            <p class="text-sm text-gray-600 mt-2">Documents hashed and ownership recorded</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold">3</div>
+            <h4 class="font-semibold text-gray-900">RealScan</h4>
+            <p class="text-sm text-gray-600 mt-2">AI analyzes for fraud risks</p>
+        </div>
+        <div class="text-center">
+            <div class="w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 font-bold">4</div>
+            <h4 class="font-semibold text-gray-900">Transact</h4>
+            <p class="text-sm text-gray-600 mt-2">Buy, rent, or sell with confidence</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
