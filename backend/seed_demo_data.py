@@ -20,6 +20,7 @@ from app.models import (
     User, Property, Unit, Document, Agent, PropertyAgent,
     OwnershipRecord, Interest, Subscription, Dispute, FraudAlert,
     PropertyImage, Inspection, AgentRating, TimelineEvent, ChatSession, ChatMessage,
+    Transaction,
     PropertyStatus, PropertyType, UnitStatus, AgentAssignmentStatus,
     UserRole, InterestStatus, DisputeStatus, TransactionType
 )
@@ -51,25 +52,12 @@ PROPERTY_TITLES = [
     "Penthouse Suite",
     "Terrace House",
     "Commercial Complex",
-    "Warehouse Complex",
-    "Shopping Mall Space",
-    "Residential Land",
-    "Detached Villa",
-    "Townhouse Complex"
 ]
 
 DESCRIPTIONS = [
-    "Beautiful property with modern finishes and excellent location. "
-    "Features include spacious rooms, modern kitchen, and secure parking. "
-    "Perfect for families or investors looking for prime real estate.",
-
-    "Premium property in a sought-after neighborhood. "
-    "This property boasts contemporary design, quality finishes, and proximity to amenities. "
-    "Ideal for both residential and commercial purposes.",
-
-    "Stunning property offering exceptional value. "
-    "Features include well-maintained gardens, secure compound, and easy access to main roads. "
-    "A rare opportunity in this prestigious location."
+    "Beautiful property with modern finishes and excellent location. Features include spacious rooms, modern kitchen, and secure parking.",
+    "Premium property in a sought-after neighborhood. Contemporary design with quality finishes and proximity to amenities.",
+    "Stunning property offering exceptional value. Well-maintained gardens, secure compound, and easy access to main roads."
 ]
 
 DOC_TYPES = ["deed", "title", "survey", "c_of_o", "building_approval", "tax_clearance"]
@@ -102,13 +90,13 @@ def create_demo_users(db: Session) -> dict:
     ]
 
     users['owners'] = []
-    for i, (name, phone, email) in enumerate(owner_names):
+    for name, phone, email in owner_names:
         owner = User(
             address=hash_user_address(phone),
             name=name,
             phone=phone,
             email=email,
-            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",  # "password123"
+            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",
             role=UserRole.OWNER,
             is_active=True
         )
@@ -129,7 +117,7 @@ def create_demo_users(db: Session) -> dict:
             name=name,
             phone=phone,
             email=email,
-            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",  # "password123"
+            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",
             role=UserRole.AGENT,
             is_active=True
         )
@@ -150,7 +138,7 @@ def create_demo_users(db: Session) -> dict:
             name=name,
             phone=phone,
             email=email,
-            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",  # "password123"
+            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",
             role=UserRole.BUYER,
             is_active=True
         )
@@ -341,7 +329,7 @@ def create_demo_agent_assignments(db: Session, properties: list, agents: list) -
     assignments = []
 
     for prop in properties[:8]:  # Assign agents to first 8 properties
-        if random.random() > 0.5:  # 50% chance of having an agent
+        if random.random() > 0.5 and agents:  # 50% chance of having an agent
             agent = random.choice(agents)
             assignment = PropertyAgent(
                 property_id=prop.id,
@@ -369,12 +357,13 @@ def create_demo_interests(db: Session, properties: list, users: dict) -> list:
 
     for buyer in users['buyers']:
         # Each buyer expresses interest in 1-3 properties
-        for prop in random.sample(properties, min(random.randint(1, 3), len(properties))):
+        sample_size = min(random.randint(1, 3), len(properties))
+        for prop in random.sample(properties, sample_size):
             interest = Interest(
                 property_id=prop.id,
                 user_id=buyer.id,
                 status=random.choice([InterestStatus.PENDING, InterestStatus.CONTACTED]),
-                message=f"I am interested in this property. Please contact me for viewing."
+                message="I am interested in this property. Please contact me for viewing."
             )
             db.add(interest)
             interests.append(interest)
@@ -423,7 +412,8 @@ def create_demo_disputes(db: Session, properties: list, users: dict) -> list:
     disputes = []
 
     # Create 2-3 disputes
-    for i in range(min(3, len(properties), len(users['buyers']))):
+    num_disputes = min(3, len(properties), len(users['buyers']))
+    for i in range(num_disputes):
         dispute = Dispute(
             property_id=properties[i].id,
             user_id=users['buyers'][i % len(users['buyers'])].id,
@@ -450,7 +440,8 @@ def create_demo_fraud_alerts(db: Session, properties: list) -> list:
     severities = ["LOW", "MEDIUM", "HIGH"]
 
     # Create 1-2 fraud alerts
-    for i in range(min(2, len(properties))):
+    num_alerts = min(2, len(properties))
+    for i in range(num_alerts):
         alert = FraudAlert(
             property_id=properties[-(i + 1)].id,  # Use last properties
             alert_type=random.choice(alert_types),
