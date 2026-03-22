@@ -73,7 +73,7 @@ def create_demo_users(db: Session) -> dict:
         name="Admin User",
         phone="+2348012345678",
         email="admin@reallink.africa",
-        password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",  # "admin123"
+        password_hash="$2b$12$I0Xb/rJgsf4G.oaVLU9kH.9bVr9lsHrV7wMdTxyNLqvI4scoAKTvW",  # "admin123"
         role=UserRole.ADMIN,
         is_active=True
     )
@@ -96,7 +96,7 @@ def create_demo_users(db: Session) -> dict:
             name=name,
             phone=phone,
             email=email,
-            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",
+            password_hash="$2b$12$/cDkrune67z5LxnuQlc6hOuiqpSq8n8XX1m0Pr6Qenj0Qd0cQDHiq",  # "password123"
             role=UserRole.OWNER,
             is_active=True
         )
@@ -117,7 +117,7 @@ def create_demo_users(db: Session) -> dict:
             name=name,
             phone=phone,
             email=email,
-            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",
+            password_hash="$2b$12$/cDkrune67z5LxnuQlc6hOuiqpSq8n8XX1m0Pr6Qenj0Qd0cQDHiq",  # "password123"
             role=UserRole.AGENT,
             is_active=True
         )
@@ -138,7 +138,7 @@ def create_demo_users(db: Session) -> dict:
             name=name,
             phone=phone,
             email=email,
-            password_hash="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYqVqxqZ",
+            password_hash="$2b$12$/cDkrune67z5LxnuQlc6hOuiqpSq8n8XX1m0Pr6Qenj0Qd0cQDHiq",  # "password123"
             role=UserRole.BUYER,
             is_active=True
         )
