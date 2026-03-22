@@ -3,7 +3,7 @@ RealLink Ecosystem - Flask Frontend
 Main application with Jinja templates + HTMX + Alpine.js + TailwindCSS
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import requests
 import os
@@ -12,6 +12,10 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'reallink_secret_key_change_in_production')
+
+# Configure upload folder to serve files from backend
+BACKEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend')
+UPLOAD_FOLDER = os.path.join(BACKEND_DIR, 'uploads')
 
 # Flask-Login setup
 login_manager = LoginManager()
@@ -985,6 +989,14 @@ def admin_verify_agent(agent_id):
         flash('Failed to verify agent', 'error')
 
     return redirect(url_for('admin_dashboard'))
+
+
+# ==================== STATIC FILE SERVING ====================
+
+@app.route('/static/uploads/<path:filename>')
+def serve_upload(filename):
+    """Serve uploaded files from backend uploads directory"""
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 
 if __name__ == '__main__':

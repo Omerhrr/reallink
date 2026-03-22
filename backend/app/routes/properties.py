@@ -20,6 +20,8 @@ from app.utils import hash_document
 import json
 import uuid
 import os
+from PIL import Image
+import io
 
 router = APIRouter()
 
@@ -761,18 +763,35 @@ async def upload_property_image(
     # Read file content
     content = await file.read()
     
-    # Generate unique filename
-    file_ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    unique_filename = f"{uuid.uuid4().hex}.{file_ext}"
-    
-    # In production, save to cloud storage (S3, Cloudinary, etc.)
-    # For now, we'll use a URL pattern
-    upload_dir = f"uploads/properties/{property_id}"
-    os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, unique_filename)
-    
-    with open(file_path, "wb") as f:
-        f.write(content)
+    # Convert to WebP using Pillow
+    try:
+        # Open image from bytes
+        img = Image.open(io.BytesIO(content))
+        
+        # Convert RGBA to RGB for WebP (if needed)
+        if img.mode == 'RGBA':
+            # Create white background for transparent images
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            background.paste(img, mask=img.split()[3])  # 3 is the alpha channel
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Generate unique filename with .webp extension
+        unique_filename = f"{uuid.uuid4().hex}.webp"
+        
+        # Create upload directory
+        upload_dir = f"uploads/properties/{property_id}"
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, unique_filename)
+        
+        # Save as WebP with quality optimization
+        img.save(file_path, 'WEBP', quality=85, method=6)
+        
+        # Image is now saved as WebP, original bytes are discarded
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
     
     image_url = f"/static/uploads/properties/{property_id}/{unique_filename}"
 
