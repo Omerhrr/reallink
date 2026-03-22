@@ -80,6 +80,20 @@ def api_call(method, endpoint, data=None, params=None):
         return None
 
 
+def api_upload_file(endpoint, files, data=None):
+    """Upload file to backend API"""
+    url = f"{API_URL}{endpoint}"
+    headers = get_auth_headers()
+    # Don't set Content-Type for multipart, requests will set it automatically
+
+    try:
+        response = requests.post(url, files=files, data=data, headers=headers)
+        return response
+    except requests.RequestException as e:
+        print(f"Upload Error: {e}")
+        return None
+
+
 # Context processor for templates
 @app.context_processor
 def inject_now():
@@ -358,6 +372,98 @@ def create_unit(property_id):
         flash('Unit created successfully!', 'success')
     else:
         flash('Failed to create unit', 'error')
+
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+# ==================== IMAGE UPLOAD ROUTES ====================
+
+@app.route('/properties/<int:property_id>/images/upload', methods=['POST'])
+@login_required
+def upload_property_image(property_id):
+    """Upload image for a property"""
+    if 'image' not in request.files:
+        flash('No image file selected', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    file = request.files['image']
+    if file.filename == '':
+        flash('No image file selected', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    files = {'file': (file.filename, file.stream, file.content_type)}
+    data = {
+        'caption': request.form.get('caption', ''),
+        'is_primary': request.form.get('is_primary', 'false').lower() == 'true'
+    }
+
+    response = api_upload_file(f'/properties/{property_id}/images', files, data)
+
+    if response and response.status_code == 200:
+        flash('Image uploaded successfully!', 'success')
+    else:
+        error = response.json().get('detail', 'Failed to upload image') if response else 'Failed to upload image'
+        flash(error, 'error')
+
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+@app.route('/properties/<int:property_id>/images/<int:image_id>/delete', methods=['POST'])
+@login_required
+def delete_property_image(property_id, image_id):
+    """Delete a property image"""
+    response = api_call('DELETE', f'/properties/{property_id}/images/{image_id}')
+
+    if response and response.status_code == 200:
+        flash('Image deleted successfully!', 'success')
+    else:
+        flash('Failed to delete image', 'error')
+
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+@app.route('/properties/<int:property_id>/images/<int:image_id>/set-primary', methods=['POST'])
+@login_required
+def set_primary_image(property_id, image_id):
+    """Set an image as primary"""
+    response = api_call('POST', f'/properties/{property_id}/images/{image_id}/set-primary')
+
+    if response and response.status_code == 200:
+        flash('Primary image updated!', 'success')
+    else:
+        flash('Failed to set primary image', 'error')
+
+    return redirect(url_for('property_detail', property_id=property_id))
+
+
+# ==================== DOCUMENT UPLOAD ROUTES ====================
+
+@app.route('/properties/<int:property_id>/documents/upload', methods=['POST'])
+@login_required
+def upload_property_document(property_id):
+    """Upload document for a property with hash generation"""
+    if 'document' not in request.files:
+        flash('No document file selected', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    file = request.files['document']
+    if file.filename == '':
+        flash('No document file selected', 'error')
+        return redirect(url_for('property_detail', property_id=property_id))
+
+    doc_type = request.form.get('doc_type', 'other')
+
+    files = {'file': (file.filename, file.stream, file.content_type)}
+    data = {'doc_type': doc_type}
+
+    response = api_upload_file(f'/properties/{property_id}/documents', files, data)
+
+    if response and response.status_code == 200:
+        result = response.json()
+        flash(f'Document uploaded successfully! Hash: {result.get("doc_hash", "")[:16]}...', 'success')
+    else:
+        error = response.json().get('detail', 'Failed to upload document') if response else 'Failed to upload document'
+        flash(error, 'error')
 
     return redirect(url_for('property_detail', property_id=property_id))
 

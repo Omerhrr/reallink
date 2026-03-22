@@ -200,6 +200,11 @@ async def get_property(
     # Get documents
     documents = db.query(Document).filter(Document.property_id == property_id).all()
 
+    # Get images
+    images = db.query(PropertyImage).filter(
+        PropertyImage.property_id == property_id
+    ).order_by(PropertyImage.order).all()
+
     # Calculate trust score
     trust_service = TrustScoreService(db)
     trust_score = trust_service.calculate_property_trust_score(property_id)
@@ -237,9 +242,20 @@ async def get_property(
                 "id": d.id,
                 "file_name": d.file_name,
                 "doc_type": d.doc_type,
+                "doc_hash": d.doc_hash,
                 "verified": d.verified,
                 "created_at": d.created_at.isoformat()
             } for d in documents
+        ],
+        "images": [
+            {
+                "id": img.id,
+                "image_url": img.image_url,
+                "caption": img.caption,
+                "is_primary": img.is_primary,
+                "order": img.order,
+                "created_at": img.created_at.isoformat()
+            } for img in images
         ],
         "trust_score": trust_score
     }

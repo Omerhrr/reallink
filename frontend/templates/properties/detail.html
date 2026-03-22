@@ -17,15 +17,76 @@
 <div class="grid lg:grid-cols-3 gap-8">
     <!-- Main Content -->
     <div class="lg:col-span-2 space-y-6">
-        <!-- Property Header -->
+        <!-- Image Slideshow Carousel -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <!-- Image Placeholder -->
-            <div class="h-64 bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center">
-                <svg class="w-24 h-24 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                </svg>
-            </div>
+            {% if property.images and property.images|length > 0 %}
+            <!-- Carousel Container -->
+            <div class="relative" x-data="{ currentSlide: 0 }">
+                <!-- Slides -->
+                <div class="relative h-80 overflow-hidden">
+                    {% for image in property.images %}
+                    <div x-show="currentSlide === {{ loop.index0 }}"
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-300"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         class="absolute inset-0">
+                        <img src="{{ image.image_url }}" alt="{{ image.caption or prop.title }}"
+                             class="w-full h-full object-cover">
+                        {% if image.caption %}
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                            <p class="text-white text-sm">{{ image.caption }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
 
+                <!-- Navigation Arrows -->
+                {% if property.images|length > 1 %}
+                <button @click="currentSlide = currentSlide === 0 ? {{ property.images|length - 1 }} : currentSlide - 1"
+                        class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg">
+                    <svg class="w-5 h-5 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <button @click="currentSlide = currentSlide === {{ property.images|length - 1 }} ? 0 : currentSlide + 1"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg">
+                    <svg class="w-5 h-5 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+
+                <!-- Dots Indicator -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                    {% for image in property.images %}
+                    <button @click="currentSlide = {{ loop.index0 }}"
+                            :class="currentSlide === {{ loop.index0 }} ? 'bg-white' : 'bg-white/50'"
+                            class="w-2 h-2 rounded-full transition-all"></button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Image Counter -->
+                <div class="absolute top-4 right-4 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    <span x-text="currentSlide + 1"></span> / {{ property.images|length }}
+                </div>
+            </div>
+            {% else %}
+            <!-- No Images Placeholder -->
+            <div class="h-80 bg-gradient-to-br from-emerald-100 to-blue-100 flex items-center justify-center">
+                <div class="text-center">
+                    <svg class="w-24 h-24 text-emerald-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <p class="text-emerald-500 mt-2">No images uploaded yet</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Property Info -->
             <div class="p-6">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -92,31 +153,90 @@
         </div>
         {% endif %}
 
-        <!-- Documents -->
-        {% if property.documents %}
+        <!-- Documents Section -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Documents</h2>
-            <div class="space-y-2">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                Documents
+                {% if property.documents and property.documents|length > 0 %}
+                <span class="text-sm font-normal text-gray-500">({{ property.documents|length }} uploaded)</span>
+                {% endif %}
+            </h2>
+
+            {% if property.documents and property.documents|length > 0 %}
+            <div class="space-y-3">
                 {% for doc in property.documents %}
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex items-center">
-                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <div>
-                            <div class="text-sm font-medium text-gray-900">{{ doc.file_name }}</div>
-                            <div class="text-xs text-gray-500">{{ doc.doc_type }}</div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">{{ doc.file_name }}</p>
+                                <p class="text-xs text-gray-500 capitalize">{{ doc.doc_type|replace('_', ' ') }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs px-2 py-1 rounded-full
+                                {% if doc.verified %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                                {% if doc.verified %}Verified{% else %}Pending{% endif %}
+                            </span>
                         </div>
                     </div>
-                    <span class="text-xs px-2 py-1 rounded-full
-                        {% if doc.verified %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                        {% if doc.verified %}Verified{% else %}Pending{% endif %}
-                    </span>
+                    <!-- Document Hash Display -->
+                    <div class="mt-3 bg-gray-50 rounded p-2">
+                        <p class="text-xs text-gray-500 mb-1">Document Hash (SHA-256):</p>
+                        <p class="text-xs font-mono text-gray-700 break-all">{{ doc.doc_hash if doc.doc_hash else 'Hash not available' }}</p>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p>No documents uploaded yet</p>
+            </div>
+            {% endif %}
+
+            <!-- Document Upload (Owner Only) -->
+            {% if current_user.is_authenticated and current_user.id == prop.owner_id %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Upload New Document</h3>
+                <form action="{{ url_for('upload_property_document', property_id=prop.id) }}" method="POST" enctype="multipart/form-data">
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <select name="doc_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                    <option value="">Select Type</option>
+                                    <option value="deed">Deed</option>
+                                    <option value="title">Title Document</option>
+                                    <option value="survey">Survey Plan</option>
+                                    <option value="c_of_o">Certificate of Occupancy</option>
+                                    <option value="building_approval">Building Approval</option>
+                                    <option value="tax_clearance">Tax Clearance</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <input type="file" name="document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required
+                                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 text-sm">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            Upload Document & Generate Hash
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     <!-- Sidebar -->
@@ -200,22 +320,8 @@
                     </button>
                 </form>
                 {% endif %}
-                
-                <!-- Image Upload -->
-                <hr class="my-4">
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h3 class="text-sm font-medium text-gray-700 mb-3">Upload Image</h3>
-                    <form action="{{ url_for('upload_property_image', property_id=prop.id) }}" method="POST" enctype="multipart/form-data">
-                        <input type="file" name="image" accept="image/*" required
-                               class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                        <button type="submit"
-                                class="mt-2 w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 text-sm">
-                            Upload Image
-                        </button>
-                    </form>
-                </div>
                 {% endif %}
-                
+
                 <!-- Rate Agent (for completed deals) -->
                 {% if current_user.is_authenticated and prop.status in ['SOLD', 'FULLY_RENTED'] %}
                 <hr class="my-4">
@@ -231,8 +337,75 @@
             </div>
         </div>
 
+        <!-- Image Upload (Owner Only) -->
+        {% if current_user.is_authenticated and current_user.id == prop.owner_id %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                Manage Images
+                {% if property.images and property.images|length > 0 %}
+                <span class="text-sm font-normal text-gray-500">({{ property.images|length }} uploaded)</span>
+                {% endif %}
+            </h2>
+
+            <!-- Upload Form -->
+            <form action="{{ url_for('upload_property_image', property_id=prop.id) }}" method="POST" enctype="multipart/form-data">
+                <div class="space-y-3">
+                    <input type="file" name="image" accept="image/*" required
+                           class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    <input type="text" name="caption" placeholder="Image caption (optional)"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_primary" id="is_primary" class="mr-2">
+                        <label for="is_primary" class="text-sm text-gray-600">Set as primary image</label>
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 text-sm">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Upload Image
+                    </button>
+                </div>
+            </form>
+
+            <!-- Image List -->
+            {% if property.images and property.images|length > 0 %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Uploaded Images</h3>
+                <div class="space-y-2">
+                    {% for image in property.images %}
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-200 rounded overflow-hidden">
+                                <img src="{{ image.image_url }}" alt="" class="w-full h-full object-cover">
+                            </div>
+                            <div class="ml-2">
+                                <p class="text-xs text-gray-600 truncate" style="max-width: 100px;">
+                                    {{ image.caption or 'No caption' }}
+                                </p>
+                                {% if image.is_primary %}
+                                <span class="text-xs text-emerald-600 font-medium">Primary</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            {% if not image.is_primary %}
+                            <form action="{{ url_for('set_primary_image', property_id=prop.id, image_id=image.id) }}" method="POST">
+                                <button type="submit" class="text-xs text-blue-600 hover:underline px-1">Set Primary</button>
+                            </form>
+                            {% endif %}
+                            <form action="{{ url_for('delete_property_image', property_id=prop.id, image_id=image.id) }}" method="POST" onsubmit="return confirm('Delete this image?')">
+                                <button type="submit" class="text-xs text-red-600 hover:underline px-1">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Add Unit (Owner Only) -->
-        {% if current_user.is_authenticated and current_user.id == prop.owner_id and prop.property_type == 'RENT' %}
+        {% if prop.property_type == 'RENT' %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Add Unit</h2>
             <form action="{{ url_for('create_unit', property_id=prop.id) }}" method="POST">
@@ -248,6 +421,7 @@
                 </div>
             </form>
         </div>
+        {% endif %}
         {% endif %}
     </div>
 </div>
